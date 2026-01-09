@@ -1,61 +1,62 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Darts Match Controller</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Darts Match Controller</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <div class="app">
+    <div class="app">
 
-    <!-- SCOREBOARD -->
-    <div class="scoreboard" role="region" aria-label="Scoreboard">
-      <div class="player active" id="player-0" aria-live="polite">
-        <div class="name">Spieler A</div>
-        <div class="score">501</div>
-        <div class="meta">Sets 0 · Legs 0</div>
-      </div>
+        <div class="scoreboard" id="scoreboard-container" role="region" aria-label="Scoreboard">
+            <div class="player active" id="player-0" aria-live="polite">
+                <div class="name">Spieler A</div>
+                <div class="score">501</div>
+                <div class="meta">Sets 0 · Legs 0</div>
+            </div>
 
-      <div class="player" id="player-1" aria-live="polite">
-        <div class="name">Spieler B</div>
-        <div class="score">501</div>
-        <div class="meta">Sets 0 · Legs 0</div>
-      </div>
+            <div class="player" id="player-1" aria-live="polite">
+                <div class="name">Spieler B</div>
+                <div class="score">501</div>
+                <div class="meta">Sets 0 · Legs 0</div>
+            </div>
+        </div>
+
+        <div class="turn" role="status" aria-label="Aktuelle Aufnahme">
+            <div class="turn-score">CURRENT TURN: 0</div>
+            <div class="turn-darts">Darts: 0 / 3</div>
+        </div>
+
+        <div class="pad" role="application" aria-label="Eingabefeld Darts">
+            <div class="numbers" role="group" aria-label="Feldzahlen">
+                <button type="button">1</button><button type="button">2</button>
+                <button type="button">3</button><button type="button">4</button>
+                <button type="button">5</button><button type="button">6</button>
+                <button type="button">7</button><button type="button">8</button>
+                <button type="button">9</button><button type="button">10</button>
+                <button type="button">11</button><button type="button">12</button>
+                <button type="button">13</button><button type="button">14</button>
+                <button type="button">15</button><button type="button">16</button>
+                <button type="button">17</button><button type="button">18</button>
+                <button type="button">19</button><button type="button">20</button>
+                <button type="button" class="wide">25</button>
+                <button type="button" class="wide">0</button>
+            </div>
+
+            <div class="actions" role="group" aria-label="Aktionen">
+                <button type="button" class="modifier" data-mult="2">DOUBLE</button>
+                <button type="button" class="modifier" data-mult="3">TRIPLE</button>
+                <button type="button" class="ok">OK</button>
+                <button type="button" class="undo">UNDO</button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- CURRENT TURN -->
-    <div class="turn" role="status" aria-label="Aktuelle Aufnahme">
-      <div class="turn-score">CURRENT TURN: 0</div>
-      <div class="turn-darts">Darts: 0 / 3</div>
-    </div>
-
-    <!-- NUMERIC PAD -->
-    <div class="pad" role="application" aria-label="Eingabefeld Darts">
-      <div class="numbers" role="group" aria-label="Feldzahlen">
-        <!-- Buttons mit sichtbarem Text (app.js liest die innerText) -->
-        <button type="button">1</button><button type="button">2</button><button type="button">3</button><button type="button">4</button><button type="button">5</button>
-        <button type="button">6</button><button type="button">7</button><button type="button">8</button><button type="button">9</button><button type="button">10</button>
-        <button type="button">11</button><button type="button">12</button><button type="button">13</button><button type="button">14</button><button type="button">15</button>
-        <button type="button">16</button><button type="button">17</button><button type="button">18</button><button type="button">19</button><button type="button">20</button>
-        <button type="button" class="wide">25</button>
-      </div>
-
-      <div class="actions" role="group" aria-label="Aktionen">
-        <!-- zwei Modifier (Double / Triple), OK und UNDO -->
-        <button type="button" class="modifier" data-mult="2">DOUBLE</button>
-        <button type="button" class="modifier" data-mult="3">TRIPLE</button>
-        <button type="button" class="ok">OK</button>
-        <button type="button" class="undo">UNDO</button>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- WICHTIG: Reihenfolge der Skripte -->
-  <script src="settings.js"></script>
-  <script src="game.js"></script>
-  <script src="app.js"></script>
+    <script src="settings.js"></script>
+    <script src="game.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
