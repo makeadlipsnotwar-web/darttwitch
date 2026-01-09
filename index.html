@@ -3,25 +3,35 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Darts Controller Pro</title>
+    <title>Darts Pro Controller</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-    <div class="app">
-        <div class="scoreboard" id="scoreboard-container">
-            <div class="player active" id="player-0">
-                <div class="name" contenteditable="true">Spieler 1</div>
-                <div class="score">501</div>
-                <div class="meta">Sets 0 · Legs 0</div>
-            </div>
-
-            <div class="player" id="player-1">
-                <div class="name" contenteditable="true">Spieler 2</div>
-                <div class="score">501</div>
-                <div class="meta">Sets 0 · Legs 0</div>
-            </div>
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <h2>Einstellungen</h2>
+            <label>Start-Punkte: <input type="number" id="input-startScore" value="501"></label>
+            <label>Best of Legs: <input type="number" id="input-legs" value="5"></label>
+            <label>Best of Sets: <input type="number" id="input-sets" value="1"></label>
+            <div id="player-names-inputs">
+                </div>
+            <button class="save-btn" onclick="saveNewSettings()">Speichern & Neustart</button>
+            <button class="close-btn" onclick="toggleSettings()">Schließen</button>
         </div>
+    </div>
+
+    <div id="event-overlay" class="event-overlay">
+        <h1 id="event-text">180!</h1>
+    </div>
+
+    <div class="app">
+        <div class="header">
+            <button class="settings-trigger" onclick="toggleSettings()">⚙️</button>
+        </div>
+
+        <div class="scoreboard" id="scoreboard-container">
+            </div>
 
         <div class="turn-history">
             <div class="dart" id="dart-0">?</div>
@@ -31,30 +41,22 @@
 
         <div class="turn">
             <div class="turn-score">0</div>
-            <div class="turn-info">AKTUELLER TURN</div>
         </div>
 
         <div class="pad">
             <div class="numbers">
-                <button type="button">1</button><button type="button">2</button>
-                <button type="button">3</button><button type="button">4</button>
-                <button type="button">5</button><button type="button">6</button>
-                <button type="button">7</button><button type="button">8</button>
-                <button type="button">9</button><button type="button">10</button>
-                <button type="button">11</button><button type="button">12</button>
-                <button type="button">13</button><button type="button">14</button>
-                <button type="button">15</button><button type="button">16</button>
-                <button type="button">17</button><button type="button">18</button>
-                <button type="button">19</button><button type="button">20</button>
-                <button type="button" class="wide">25</button>
-                <button type="button" class="wide">0</button>
+                <script>
+                    for(let i=1; i<=20; i++) document.write(`<button type="button" class="num-btn">${i}</button>`);
+                </script>
+                <button type="button" class="num-btn wide">25</button>
+                <button type="button" class="num-btn wide">0</button>
             </div>
 
             <div class="actions">
                 <button type="button" class="modifier" data-mult="2">DOUBLE</button>
                 <button type="button" class="modifier" data-mult="3">TRIPLE</button>
-                <button type="button" class="undo">UNDO / EDIT</button>
-                <button type="button" class="next-turn-btn" style="background: #28a745; color: white; display: none;">NÄCHSTE AUFNAHME</button>
+                <button type="button" class="undo">UNDO</button>
+                <button type="button" class="next-turn-btn" style="display:none;">NÄCHSTE AUFNAHME</button>
             </div>
         </div>
     </div>
