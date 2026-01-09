@@ -1,3 +1,30 @@
+let game;
+
+function initGame(settings) {
+  game = {
+    settings,
+    currentPlayer: 0,
+    dartsThrownInTurn: 0,
+    currentTurnScore: 0,
+    players: [
+      createPlayer("Spieler A"),
+      createPlayer("Spieler B")
+    ]
+  };
+}
+
+function createPlayer(name) {
+  return {
+    name,
+    score: game.settings.startScore,
+    legs: 0,
+    sets: 0,
+    darts: 0,
+    points: 0,
+    highest: 0
+  };
+}
+
 const game = {
   settings: {
     startScore: 501,
