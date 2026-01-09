@@ -2,6 +2,7 @@
 
 // Wir nutzen die Einstellungen aus der settings.js (falls vorhanden) 
 // oder definieren sie hier, falls settings.js leer ist.
+document.addEventListener("DOMContentLoaded", () => {
 const currentSettings = typeof defaultSettings !== 'undefined' ? defaultSettings : {
   playerCount: 2,
   startScore: 501,
@@ -105,3 +106,4 @@ document.querySelector(".undo").onclick = () => {
   resetThrow();
   render();
 };
+});
