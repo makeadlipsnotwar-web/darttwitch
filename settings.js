@@ -1,18 +1,23 @@
-function getSettingsFromUI() {
-  // Wir holen uns die Werte direkt aus den HTML-Elementen
-  const settings = {
-    playerCount: parseInt(document.getElementById('input-players').value),
-    startScore: parseInt(document.getElementById('input-score').value),
-    doubleOut: document.getElementById('input-doubleout').checked,
-    bestOfLegs: parseInt(document.getElementById('input-legs').value),
-    bestOfSets: parseInt(document.getElementById('input-sets').value)
-  };
+// settings.js
 
-  return settings;
-}
+const defaultSettings = {
+    playerCount: 2,      // Wie viele Spieler nehmen teil?
+    startScore: 501,     // 301, 501, 701
+    doubleOut: true,     // Muss mit einem Doppel beendet werden?
+    bestOfLegs: 5,       // Wie viele Legs braucht man für einen Set-Gewinn?
+    bestOfSets: 3,       // Wie viele Sets braucht man für den Match-Gewinn?
+    
+    // Namen für die Anzeige im Scoreboard
+    playerNames: ["Spieler A", "Spieler B"]
+};
 
-function startGame() {
-  const currentSettings = getSettingsFromUI();
-  initGame(currentSettings); // Hier nutzt du deine verbesserte init-Funktion
-  console.log("Spiel gestartet mit:", currentSettings);
+// Falls du später ein Menü baust, kannst du hier die Werte überschreiben
+let currentSettings = { ...defaultSettings };
+
+/**
+ * Hilfsfunktion, um die Einstellungen während der Laufzeit zu ändern
+ */
+function updateSettings(newSettings) {
+    currentSettings = { ...currentSettings, ...newSettings };
+    console.log("Settings aktualisiert:", currentSettings);
 }
