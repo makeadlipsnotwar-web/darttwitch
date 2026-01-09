@@ -86,6 +86,18 @@ document.querySelector(".ok").onclick = () => {
   }
   throwDart();
   render();
+  // app.js
+};
+
+document.querySelector(".undo").onclick = () => {
+  // Wenn gerade eine Zahl ausgewählt ist (z.B. Triple 20), aber noch nicht OK gedrückt wurde:
+  if (pendingValue !== null) {
+    resetThrow(); // Nur die aktuelle Auswahl löschen
+  } else {
+    // Sonst den letzten geworfenen Dart wirklich im Spiel rückgängig machen
+    undoLastAction(); 
+  }
+  render(); // Anzeige aktualisieren
 };
 
 // UNDO-Button (In deinem Fall aktuell ein Reset des aktuellen Wurfs)
