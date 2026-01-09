@@ -1,101 +1,87 @@
-// game.js
 let game = null;
 let multiplier = 1;
-let pendingValue = null;
-let history = []; 
+let history = [];
 
 function initGame(settings) {
-    const players = [];
-    for (let i = 0; i < settings.playerCount; i++) {
-        players.push({
-            name: settings.playerNames[i] || `Spieler ${i + 1}`,
-            score: Number(settings.startScore),
-            legs: 0,
-            sets: 0
-        });
-    }
+    const players = settings.playerNames.map(name => ({
+        name: name,
+        score: Number(settings.startScore),
+        legs: 0,
+        sets: 0
+    }));
 
     game = {
         settings: { ...settings },
         currentPlayer: 0,
-        dartsThrownInTurn: 0,
+        currentTurnDarts: [],
         currentTurnScore: 0,
         scoreAtTurnStart: Number(settings.startScore),
         players: players,
-        isGameOver: false
+        isGameOver: false,
+        waitingForNextTurn: false
     };
-    console.log("Spiel initialisiert", game);
 }
 
-function setMultiplier(m) {
-    multiplier = m;
-}
-
-function selectNumber(value) {
-    pendingValue = Number(value) * multiplier;
-}
-
-function throwDart() {
-    if (pendingValue === null || !game || game.isGameOver) return;
-    
-    // State für Undo speichern
+function saveState() {
     history.push(JSON.parse(JSON.stringify({
         players: game.players,
         currentPlayer: game.currentPlayer,
-        dartsThrownInTurn: game.dartsThrownInTurn,
+        currentTurnDarts: game.currentTurnDarts,
         currentTurnScore: game.currentTurnScore,
-        scoreAtTurnStart: game.scoreAtTurnStart
+        scoreAtTurnStart: game.scoreAtTurnStart,
+        waitingForNextTurn: game.waitingForNextTurn
     })));
+}
 
+function addDart(value) {
+    if (game.isGameOver || game.waitingForNextTurn || game.currentTurnDarts.length >= 3) return;
+
+    saveState();
+    const points = value * multiplier;
     const player = game.players[game.currentPlayer];
-    const newScore = player.score - pendingValue;
+    const newScore = player.score - points;
+
     const isDouble = (multiplier === 2);
-    
-    // Bust Regeln
     const isBust = newScore < 0 || (newScore === 1 && game.settings.doubleOut) || (newScore === 0 && game.settings.doubleOut && !isDouble);
 
     if (isBust) {
         player.score = game.scoreAtTurnStart;
-        endTurn();
-    } else if (newScore === 0) {
-        player.score = 0;
-        finishLeg();
+        game.currentTurnDarts.push("BUST");
+        game.waitingForNextTurn = true;
     } else {
         player.score = newScore;
-        game.currentTurnScore += pendingValue;
-        game.dartsThrownInTurn++;
-        if (game.dartsThrownInTurn === 3) endTurn();
+        game.currentTurnScore += points;
+        game.currentTurnDarts.push(points);
+        
+        if (newScore === 0) {
+            game.isGameOver = true;
+            finishLeg();
+        } else if (game.currentTurnDarts.length === 3) {
+            game.waitingForNextTurn = true;
+        }
     }
-    resetThrow();
+    multiplier = 1; 
 }
 
-function endTurn() {
+function nextTurn() {
+    if (!game.waitingForNextTurn) return;
     game.currentPlayer = (game.currentPlayer + 1) % game.players.length;
-    game.dartsThrownInTurn = 0;
+    game.currentTurnDarts = [];
     game.currentTurnScore = 0;
     game.scoreAtTurnStart = game.players[game.currentPlayer].score;
-    resetThrow();
+    game.waitingForNextTurn = false;
 }
 
 function finishLeg() {
     const player = game.players[game.currentPlayer];
     player.legs++;
-    if (player.legs >= Math.ceil(game.settings.bestOfLegs / 2)) {
-        player.sets++;
-        game.players.forEach(p => p.legs = 0);
-    }
-    game.players.forEach(p => p.score = game.settings.startScore);
-    endTurn();
+    alert(player.name + " GEWINNT DAS LEG!");
+    // Hier könnte man automatisch das nächste Leg starten
 }
 
-function undoLastAction() {
+function undo() {
     if (history.length === 0) return;
     const last = history.pop();
     Object.assign(game, last);
-    resetThrow();
-}
-
-function resetThrow() {
     multiplier = 1;
-    pendingValue = null;
 }
