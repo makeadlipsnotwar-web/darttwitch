@@ -1,169 +1,101 @@
 // game.js
-
 let game = null;
 let multiplier = 1;
 let pendingValue = null;
+let history = []; 
 
-/**
- * Initialisiert ein neues Spiel basierend auf den übergebenen Einstellungen.
- */
 function initGame(settings) {
-  const players = [];
-  // Erstellt dynamisch die Anzahl an Spielern
-  for (let i = 0; i < settings.playerCount; i++) {
-    const name = settings.playerNames[i] || `Spieler ${i + 1}`;
-    players.push(createPlayer(name, settings.startScore));
-  }
+    const players = [];
+    for (let i = 0; i < settings.playerCount; i++) {
+        players.push({
+            name: settings.playerNames[i] || `Spieler ${i + 1}`,
+            score: settings.startScore,
+            legs: 0,
+            sets: 0
+        });
+    }
 
-  game = {
-    settings: { ...settings },
-    currentPlayer: 0,
-    dartsThrownInTurn: 0,
-    currentTurnScore: 0,
-    // Speichert den Punktestand zu Beginn der Aufnahme für den Bust-Fall
-    scoreAtTurnStart: settings.startScore, 
-    players: players,
-    isGameOver: false
-  };
-}
-
-function createPlayer(name, startScore) {
-  return {
-    name,
-    score: startScore,
-    legs: 0,
-    sets: 0,
-    dartsTotal: 0,
-    highestTurn: 0
-  };
-}
-
-/* ======================
-    INPUT LOGIC (für app.js)
-====================== */
-
-function selectNumber(value) {
-  pendingValue = value * multiplier;
+    game = {
+        settings: { ...settings },
+        currentPlayer: 0,
+        dartsThrownInTurn: 0,
+        currentTurnScore: 0,
+        scoreAtTurnStart: settings.startScore,
+        players: players,
+        isGameOver: false
+    };
 }
 
 function setMultiplier(m) {
-  multiplier = m;
+    multiplier = m;
 }
 
-/* ======================
-    CORE LOGIC
-====================== */
+function selectNumber(value) {
+    pendingValue = value * multiplier;
+}
+
+function saveState() {
+    history.push(JSON.parse(JSON.stringify({
+        players: game.players,
+        currentPlayer: game.currentPlayer,
+        dartsThrownInTurn: game.dartsThrownInTurn,
+        currentTurnScore: game.currentTurnScore,
+        scoreAtTurnStart: game.scoreAtTurnStart
+    })));
+}
 
 function throwDart() {
-  if (pendingValue === null || game.isGameOver) return;
+    if (pendingValue === null || game.isGameOver) return;
+    saveState();
 
-  const player = game.players[game.currentPlayer];
-  const newScore = player.score - pendingValue;
+    const player = game.players[game.currentPlayer];
+    const newScore = player.score - pendingValue;
 
-  // 1. Check auf BUST (Überworfen)
-  // Regeln: < 0 ODER genau 1 (da man mit Doppel auf 0 kommen muss) 
-  // ODER Score 0 aber kein Doppel beim Double-Out
-  const isDouble = (multiplier === 2);
-  const isBust = 
-    newScore < 0 || 
-    (newScore === 1 && game.settings.doubleOut) ||
-    (newScore === 0 && game.settings.doubleOut && !isDouble);
+    const isDouble = (multiplier === 2);
+    const isBust = newScore < 0 || (newScore === 1 && game.settings.doubleOut) || (newScore === 0 && game.settings.doubleOut && !isDouble);
 
-  if (isBust) {
-    handleBust();
-    return;
-  }
-
-  // 2. Check auf FINISH (Leg gewonnen)
-  if (newScore === 0) {
-    player.score = 0;
-    player.dartsTotal++;
-    finishLeg();
-    return;
-  }
-
-  // 3. Normaler Wurf
-  player.score = newScore;
-  player.dartsTotal++;
-  game.currentTurnScore += pendingValue;
-  game.dartsThrownInTurn++;
-
-  resetThrow();
-
-  // Aufnahme beendet nach 3 Darts
-  if (game.dartsThrownInTurn === 3) {
-    endTurn();
-  }
-}
-
-function handleBust() {
-  const player = game.players[game.currentPlayer];
-  // Score auf den Stand vor der Aufnahme zurücksetzen
-  player.score = game.scoreAtTurnStart;
-  // Wurf-Statistik trotzdem erhöhen (3 Darts verbraucht)
-  player.dartsTotal += (3 - game.dartsThrownInTurn); 
-  
-  endTurn();
+    if (isBust) {
+        player.score = game.scoreAtTurnStart;
+        endTurn();
+    } else if (newScore === 0) {
+        player.score = 0;
+        finishLeg();
+    } else {
+        player.score = newScore;
+        game.currentTurnScore += pendingValue;
+        game.dartsThrownInTurn++;
+        if (game.dartsThrownInTurn === 3) endTurn();
+    }
+    resetThrow();
 }
 
 function endTurn() {
-  const player = game.players[game.currentPlayer];
-  
-  // Statistik: Höchste Aufnahme
-  player.highestTurn = Math.max(player.highestTurn, game.currentTurnScore);
-
-  // Nächster Spieler
-  game.currentPlayer = (game.currentPlayer + 1) % game.players.length;
-  game.dartsThrownInTurn = 0;
-  game.currentTurnScore = 0;
-  
-  // Neuen Start-Score für die nächste Aufnahme merken
-  game.scoreAtTurnStart = game.players[game.currentPlayer].score;
-  
-  resetThrow();
+    game.currentPlayer = (game.currentPlayer + 1) % game.players.length;
+    game.dartsThrownInTurn = 0;
+    game.currentTurnScore = 0;
+    game.scoreAtTurnStart = game.players[game.currentPlayer].score;
+    resetThrow();
 }
 
 function finishLeg() {
-  const player = game.players[game.currentPlayer];
-  player.legs++;
-
-  const neededLegs = Math.ceil(game.settings.bestOfLegs / 2);
-  
-  if (player.legs >= neededLegs) {
-    player.sets++;
-    if (player.sets >= Math.ceil(game.settings.bestOfSets / 2)) {
-      game.isGameOver = true;
-      alert(`MATCH GEWONNEN VON ${player.name}`);
-    } else {
-      resetLegs();
+    const player = game.players[game.currentPlayer];
+    player.legs++;
+    if (player.legs >= Math.ceil(game.settings.bestOfLegs / 2)) {
+        player.sets++;
+        game.players.forEach(p => p.legs = 0);
     }
-  }
-
-  if (!game.isGameOver) {
-    resetScores();
-    // Nach einem Leg wechselt das Anwurfrecht normalerweise ab
-    endTurn(); 
-  }
+    game.players.forEach(p => p.score = game.settings.startScore);
+    endTurn();
 }
 
-/* ======================
-    RESET HELPERS
-====================== */
-
-function resetScores() {
-  game.players.forEach(p => {
-    p.score = game.settings.startScore;
-  });
-  game.scoreAtTurnStart = game.settings.startScore;
-}
-
-function resetLegs() {
-  game.players.forEach(p => {
-    p.legs = 0;
-  });
+function undoLastAction() {
+    if (history.length === 0) return;
+    const last = history.pop();
+    Object.assign(game, last);
+    resetThrow();
 }
 
 function resetThrow() {
-  multiplier = 1;
-  pendingValue = null;
+    multiplier = 1;
+    pendingValue = null;
 }
