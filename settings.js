@@ -1,4 +1,15 @@
 // settings.js
+const defaultSettings = {
+    playerCount: 2,
+    startScore: 501,
+    doubleOut: true,
+    bestOfLegs: 5,
+    bestOfSets: 1,
+    playerNames: ["Spieler A", "Spieler B"]
+};
+
+// Diese Variable hält die Einstellungen, die wir verändern können
+let currentSettings = { ...defaultSettings };// settings.js
 
 const defaultSettings = {
     playerCount: 2,      // Wie viele Spieler nehmen teil?
