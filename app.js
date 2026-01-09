@@ -1,2 +1,9 @@
-// Game State kommt als nächstes
-console.log("Darts Controller ready");
+initGame(defaultSettings);
+render();
+
+document.querySelectorAll(".numbers button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    selectNumber(Number(btn.innerText));
+    render();
+  });
+});
