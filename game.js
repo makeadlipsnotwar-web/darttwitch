@@ -9,7 +9,7 @@ function initGame(settings) {
     for (let i = 0; i < settings.playerCount; i++) {
         players.push({
             name: settings.playerNames[i] || `Spieler ${i + 1}`,
-            score: settings.startScore,
+            score: Number(settings.startScore),
             legs: 0,
             sets: 0
         });
@@ -20,10 +20,11 @@ function initGame(settings) {
         currentPlayer: 0,
         dartsThrownInTurn: 0,
         currentTurnScore: 0,
-        scoreAtTurnStart: settings.startScore,
+        scoreAtTurnStart: Number(settings.startScore),
         players: players,
         isGameOver: false
     };
+    console.log("Spiel initialisiert", game);
 }
 
 function setMultiplier(m) {
@@ -31,10 +32,13 @@ function setMultiplier(m) {
 }
 
 function selectNumber(value) {
-    pendingValue = value * multiplier;
+    pendingValue = Number(value) * multiplier;
 }
 
-function saveState() {
+function throwDart() {
+    if (pendingValue === null || !game || game.isGameOver) return;
+    
+    // State für Undo speichern
     history.push(JSON.parse(JSON.stringify({
         players: game.players,
         currentPlayer: game.currentPlayer,
@@ -42,16 +46,12 @@ function saveState() {
         currentTurnScore: game.currentTurnScore,
         scoreAtTurnStart: game.scoreAtTurnStart
     })));
-}
-
-function throwDart() {
-    if (pendingValue === null || game.isGameOver) return;
-    saveState();
 
     const player = game.players[game.currentPlayer];
     const newScore = player.score - pendingValue;
-
     const isDouble = (multiplier === 2);
+    
+    // Bust Regeln
     const isBust = newScore < 0 || (newScore === 1 && game.settings.doubleOut) || (newScore === 0 && game.settings.doubleOut && !isDouble);
 
     if (isBust) {
