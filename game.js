@@ -1,22 +1,26 @@
-let game;
+// game.js
+
+let game = null;
+let multiplier = 1;
+let pendingValue = null;
 
 function initGame(settings) {
   game = {
-    settings,
+    settings: { ...settings },
     currentPlayer: 0,
     dartsThrownInTurn: 0,
     currentTurnScore: 0,
     players: [
-      createPlayer("Spieler A"),
-      createPlayer("Spieler B")
+      createPlayer("Spieler A", settings.startScore),
+      createPlayer("Spieler B", settings.startScore)
     ]
   };
 }
 
-function createPlayer(name) {
+function createPlayer(name, startScore) {
   return {
     name,
-    score: game.settings.startScore,
+    score: startScore,
     legs: 0,
     sets: 0,
     darts: 0,
@@ -25,44 +29,12 @@ function createPlayer(name) {
   };
 }
 
-const game = {
-  settings: {
-    startScore: 501,
-    doubleOut: true,
-    bestOfLegs: 5,
-    bestOfSets: 3
-  },
-
-  currentPlayer: 0,
-  dartsThrownInTurn: 0,
-  currentTurnScore: 0,
-
-  players: [
-    {
-      name: "Spieler A",
-      score: 501,
-      legs: 0,
-      sets: 0,
-      darts: 0,
-      points: 0,
-      highest: 0
-    },
-    {
-      name: "Spieler B",
-      score: 501,
-      legs: 0,
-      sets: 0,
-      darts: 0,
-      points: 0,
-      highest: 0
-    }
-  ]
-};
-let multiplier = 1;
-let pendingThrow = 0;
+/* ======================
+   INPUT
+====================== */
 
 function selectNumber(value) {
-  pendingThrow = value * multiplier;
+  pendingValue = value * multiplier;
 }
 
 function setDouble() {
@@ -72,18 +44,27 @@ function setDouble() {
 function setTriple() {
   multiplier = 3;
 }
+
+/* ======================
+   CORE LOGIC
+====================== */
+
 function throwDart() {
+  if (pendingValue === null) return;
+
   const player = game.players[game.currentPlayer];
+  const newScore = player.score - pendingValue;
 
-  // Bust prüfen
-  const newScore = player.score - pendingThrow;
-
-  if (newScore < 0 || (game.settings.doubleOut && newScore === 1)) {
+  // Bust
+  if (
+    newScore < 0 ||
+    (game.settings.doubleOut && newScore === 1)
+  ) {
     bust();
     return;
   }
 
-  // Check-out prüfen
+  // Finish
   if (newScore === 0) {
     if (game.settings.doubleOut && multiplier !== 2) {
       bust();
@@ -93,15 +74,14 @@ function throwDart() {
     return;
   }
 
-  // Normaler Wurf
+  // Normal throw
   player.score = newScore;
   player.darts++;
-  player.points += pendingThrow;
+  player.points += pendingValue;
+  player.highest = Math.max(player.highest, pendingValue);
 
-  game.currentTurnScore += pendingThrow;
+  game.currentTurnScore += pendingValue;
   game.dartsThrownInTurn++;
-
-  player.highest = Math.max(player.highest, pendingThrow);
 
   resetThrow();
 
@@ -109,44 +89,57 @@ function throwDart() {
     endTurn();
   }
 }
+
 function bust() {
   const player = game.players[game.currentPlayer];
-
   player.score += game.currentTurnScore;
   endTurn();
 }
+
 function endTurn() {
   game.currentTurnScore = 0;
   game.dartsThrownInTurn = 0;
   game.currentPlayer = game.currentPlayer === 0 ? 1 : 0;
   resetThrow();
 }
+
 function finishLeg() {
   const player = game.players[game.currentPlayer];
-
   player.legs++;
+
   resetScores();
 
-  if (player.legs > game.settings.bestOfLegs / 2) {
+  const neededLegs = Math.ceil(game.settings.bestOfLegs / 2);
+  if (player.legs >= neededLegs) {
     player.sets++;
     resetLegs();
   }
 
-  if (player.sets > game.settings.bestOfSets / 2) {
+  const neededSets = Math.ceil(game.settings.bestOfSets / 2);
+  if (player.sets >= neededSets) {
     alert(`${player.name} gewinnt das Match`);
   }
 
   endTurn();
 }
+
+/* ======================
+   RESET HELPERS
+====================== */
+
 function resetScores() {
-  game.players.forEach(p => p.score = game.settings.startScore);
+  game.players.forEach(p => {
+    p.score = game.settings.startScore;
+  });
 }
 
 function resetLegs() {
-  game.players.forEach(p => p.legs = 0);
+  game.players.forEach(p => {
+    p.legs = 0;
+  });
 }
 
 function resetThrow() {
   multiplier = 1;
-  pendingThrow = 0;
+  pendingValue = null;
 }
