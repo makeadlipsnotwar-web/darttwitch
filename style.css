@@ -7,9 +7,26 @@
 }
 
 * { box-sizing: border-box; font-family: sans-serif; touch-action: manipulation; }
-body { margin: 0; background: var(--bg); color: var(--text); overflow: hidden; }
+body { 
+    margin: 0; 
+    background: var(--bg); 
+    color: var(--text); 
+    /* overflow: hidden; <- Entfernen oder auskommentieren */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
 
-.app { max-width: 420px; margin: 0 auto; padding: 10px; display: flex; flex-direction: column; height: 100vh; }
+.app { 
+    max-width: 450px; 
+    margin: 0 auto; 
+    padding: 10px; 
+    width: 100%;
+    /* Entferne feste Höhenangaben, damit Scrollen möglich ist */
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px;
+}
 
 .scoreboard { display: flex; gap: 8px; margin-bottom: 15px; }
 .player { flex: 1; background: var(--panel); padding: 10px; border-radius: 12px; text-align: center; transition: 0.3s; border: 2px solid transparent; }
