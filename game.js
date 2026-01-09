@@ -62,9 +62,52 @@ function addDart(value) {
     }
     multiplier = 1; 
 }
+function checkEvents(score, type) {
+    const overlay = document.getElementById('event-overlay');
+    const text = document.getElementById('event-text');
+    
+    let message = "";
+    if (type === 'turn' && score >= 140 && score < 180) message = "BIG SCORE!";
+    if (type === 'turn' && score === 180) message = "ONE HUNDRED AND EIGHTY!";
+    if (type === 'leg') message = "LEG GEWONNEN!";
+    if (type === 'set') message = "SET GEWONNEN!";
 
+    if (message !== "") {
+        text.innerText = message;
+        overlay.style.display = 'flex';
+        
+        // Sprachausgabe (Optional)
+        const msg = new SpeechSynthesisUtterance(message);
+        msg.lang = 'en-US'; // Darts klingt auf Englisch cooler
+        window.speechSynthesis.speak(msg);
+
+        setTimeout(() => { overlay.style.display = 'none'; }, 2000);
+    }
+}
+
+// In finishLeg() von vorhin ergänzen:
+function finishLeg() {
+    const player = game.players[game.currentPlayer];
+    player.legs++;
+    checkEvents(0, 'leg');
+    
+    if (player.legs >= Math.ceil(game.settings.bestOfLegs / 2)) {
+        player.sets++;
+        checkEvents(0, 'set');
+        if (player.sets >= Math.ceil(game.settings.bestOfSets / 2)) {
+            alert("MATCH GEWONNEN: " + player.name);
+            game.isGameOver = true;
+        } else {
+            game.players.forEach(p => p.legs = 0);
+        }
+    }
+    game.players.forEach(p => p.score = game.settings.startScore);
+}
+
+// In nextTurn() ergänzen:
 function nextTurn() {
     if (!game.waitingForNextTurn) return;
+    checkEvents(game.currentTurnScore, 'turn');
     game.currentPlayer = (game.currentPlayer + 1) % game.players.length;
     game.currentTurnDarts = [];
     game.currentTurnScore = 0;
