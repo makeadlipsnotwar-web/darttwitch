@@ -1,145 +1,125 @@
-// game.js
-
-let game = null;
-let multiplier = 1;
-let pendingValue = null;
-
-function initGame(settings) {
-  game = {
-    settings: { ...settings },
-    currentPlayer: 0,
-    dartsThrownInTurn: 0,
-    currentTurnScore: 0,
-    players: [
-      createPlayer("Spieler A", settings.startScore),
-      createPlayer("Spieler B", settings.startScore)
-    ]
-  };
-}
-
-function createPlayer(name, startScore) {
-  return {
-    name,
-    score: startScore,
-    legs: 0,
-    sets: 0,
-    darts: 0,
-    points: 0,
-    highest: 0
-  };
-}
-
-/* ======================
-   INPUT
-====================== */
-
-function selectNumber(value) {
-  pendingValue = value * multiplier;
-}
-
-function setDouble() {
-  multiplier = 2;
-}
-
-function setTriple() {
-  multiplier = 3;
-}
-
-/* ======================
-   CORE LOGIC
-====================== */
-
-function throwDart() {
-  if (pendingValue === null) return;
-
-  const player = game.players[game.currentPlayer];
-  const newScore = player.score - pendingValue;
-
-  // Bust
-  if (
-    newScore < 0 ||
-    (game.settings.doubleOut && newScore === 1)
-  ) {
-    bust();
-    return;
-  }
-
-  // Finish
-  if (newScore === 0) {
-    if (game.settings.doubleOut && multiplier !== 2) {
-      bust();
-      return;
+class DartsGame {
+    constructor(settings) {
+        this.settings = {
+            startScore: 501,
+            doubleOut: true,
+            bestOfLegs: 3,
+            bestOfSets: 1,
+            ...settings
+        };
+        
+        this.players = [
+            this.createPlayer("Spieler A"),
+            this.createPlayer("Spieler B")
+        ];
+        
+        this.currentPlayerIndex = 0;
+        this.turnDarts = 0;
+        this.turnScore = 0;
+        this.multiplier = 1;
+        this.scoreAtTurnStart = this.settings.startScore;
     }
-    finishLeg();
-    return;
-  }
 
-  // Normal throw
-  player.score = newScore;
-  player.darts++;
-  player.points += pendingValue;
-  player.highest = Math.max(player.highest, pendingValue);
+    createPlayer(name) {
+        return {
+            name,
+            score: this.settings.startScore,
+            legs: 0,
+            sets: 0,
+            stats: { dartsThrown: 0, highestTurn: 0 }
+        };
+    }
 
-  game.currentTurnScore += pendingValue;
-  game.dartsThrownInTurn++;
+    // Input-Methoden
+    setMultiplier(m) { this.multiplier = m; }
 
-  resetThrow();
+    throwValue(value) {
+        const points = value * this.multiplier;
+        const player = this.players[this.currentPlayerIndex];
+        const isDouble = this.multiplier === 2;
+        
+        const remainingAfterThrow = player.score - points;
 
-  if (game.dartsThrownInTurn === 3) {
-    endTurn();
-  }
+        // Validierung der Darts-Regeln
+        const isBust = 
+            remainingAfterThrow < 0 || 
+            remainingAfterThrow === 1 || 
+            (remainingAfterThrow === 0 && this.settings.doubleOut && !isDouble);
+
+        if (isBust) {
+            this.handleBust();
+        } else if (remainingAfterThrow === 0) {
+            this.handleLegWin(points);
+        } else {
+            this.handleNormalThrow(points);
+        }
+        
+        this.multiplier = 1; // Reset Multiplier nach jedem Wurf
+    }
+
+    handleNormalThrow(points) {
+        const player = this.players[this.currentPlayerIndex];
+        player.score -= points;
+        this.turnScore += points;
+        this.turnDarts++;
+        player.stats.dartsThrown++;
+
+        if (this.turnDarts === 3) {
+            this.endTurn();
+        }
+    }
+
+    handleBust() {
+        const player = this.players[this.currentPlayerIndex];
+        player.score = this.scoreAtTurnStart; // Zurück auf Anfang der Runde
+        this.endTurn();
+    }
+
+    endTurn() {
+        const player = this.players[this.currentPlayerIndex];
+        player.stats.highestTurn = Math.max(player.stats.highestTurn, this.turnScore);
+        
+        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+        this.turnDarts = 0;
+        this.turnScore = 0;
+        this.scoreAtTurnStart = this.players[this.currentPlayerIndex].score;
+    }
+
+    handleLegWin(points) {
+        const player = this.players[this.currentPlayerIndex];
+        player.legs++;
+        player.stats.dartsThrown++;
+        
+        console.log(`${player.name} gewinnt das Leg!`);
+
+        const legsToWinSet = Math.ceil(this.settings.bestOfLegs / 2);
+        if (player.legs >= legsToWinSet) {
+            this.handleSetWin(player);
+        } else {
+            this.resetForNextLeg();
+        }
+    }
+
+    handleSetWin(player) {
+        player.sets++;
+        const setsToWinMatch = Math.ceil(this.settings.bestOfSets / 2);
+        
+        if (player.sets >= setsToWinMatch) {
+            console.log(`MATCH GEWONNEN VON ${player.name}`);
+        } else {
+            this.resetForNextSet();
+        }
+    }
+
+    resetForNextLeg() {
+        this.players.forEach(p => p.score = this.settings.startScore);
+        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length; // Wechselndes Anwurf-Recht
+        this.scoreAtTurnStart = this.settings.startScore;
+        this.turnDarts = 0;
+    }
 }
 
-function bust() {
-  const player = game.players[game.currentPlayer];
-  player.score += game.currentTurnScore;
-  endTurn();
-}
-
-function endTurn() {
-  game.currentTurnScore = 0;
-  game.dartsThrownInTurn = 0;
-  game.currentPlayer = game.currentPlayer === 0 ? 1 : 0;
-  resetThrow();
-}
-
-function finishLeg() {
-  const player = game.players[game.currentPlayer];
-  player.legs++;
-
-  resetScores();
-
-  const neededLegs = Math.ceil(game.settings.bestOfLegs / 2);
-  if (player.legs >= neededLegs) {
-    player.sets++;
-    resetLegs();
-  }
-
-  const neededSets = Math.ceil(game.settings.bestOfSets / 2);
-  if (player.sets >= neededSets) {
-    alert(`${player.name} gewinnt das Match`);
-  }
-
-  endTurn();
-}
-
-/* ======================
-   RESET HELPERS
-====================== */
-
-function resetScores() {
-  game.players.forEach(p => {
-    p.score = game.settings.startScore;
-  });
-}
-
-function resetLegs() {
-  game.players.forEach(p => {
-    p.legs = 0;
-  });
-}
-
-function resetThrow() {
-  multiplier = 1;
-  pendingValue = null;
-}
+// Beispielnutzung:
+const myGame = new DartsGame({ startScore: 301, bestOfLegs: 3 });
+myGame.setMultiplier(3);
+myGame.throwValue(20); // 60 Punkte
