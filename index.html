@@ -3,35 +3,42 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Darts Pro Controller</title>
+    <title>Darts Pro</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
     <div id="settings-modal" class="modal">
         <div class="modal-content">
-            <h2>Einstellungen</h2>
-            <label>Start-Punkte: <input type="number" id="input-startScore" value="501"></label>
-            <label>Best of Legs: <input type="number" id="input-legs" value="5"></label>
-            <label>Best of Sets: <input type="number" id="input-sets" value="1"></label>
-            <div id="player-names-inputs">
-                </div>
-            <button class="save-btn" onclick="saveNewSettings()">Speichern & Neustart</button>
-            <button class="close-btn" onclick="toggleSettings()">Schließen</button>
+            <h3>Einstellungen</h3>
+            <label>Punkte: <select id="input-startScore"><option value="301">301</option><option value="501" selected>501</option></select></label>
+            <label>Legs: <input type="number" id="input-legs" value="5"></label>
+            <div id="player-names-inputs"></div>
+            <button class="save-btn" onclick="saveNewSettings()">SPEICHERN</button>
+            <button class="close-btn" onclick="toggleSettings()">ABBRECHEN</button>
         </div>
     </div>
 
-    <div id="event-overlay" class="event-overlay">
-        <h1 id="event-text">180!</h1>
-    </div>
+    <div id="event-overlay" class="event-overlay"><h1 id="event-text">180!</h1></div>
 
     <div class="app">
         <div class="header">
-            <button class="settings-trigger" onclick="toggleSettings()">⚙️</button>
+            <span>DARTS PRO</span>
+            <button onclick="toggleSettings()">⚙️</button>
         </div>
 
-        <div class="scoreboard" id="scoreboard-container">
+        <div class="scoreboard">
+            <div class="player active" id="player-0">
+                <div class="name">Spieler 1</div>
+                <div class="score">501</div>
+                <div class="meta">Sets 0 · Legs 0</div>
             </div>
+            <div class="player" id="player-1">
+                <div class="name">Spieler 2</div>
+                <div class="score">501</div>
+                <div class="meta">Sets 0 · Legs 0</div>
+            </div>
+        </div>
 
         <div class="turn-history">
             <div class="dart" id="dart-0">?</div>
@@ -39,24 +46,18 @@
             <div class="dart" id="dart-2">?</div>
         </div>
 
-        <div class="turn">
+        <div class="turn-info-area">
             <div class="turn-score">0</div>
         </div>
 
         <div class="pad">
-            <div class="numbers">
-                <script>
-                    for(let i=1; i<=20; i++) document.write(`<button type="button" class="num-btn">${i}</button>`);
-                </script>
-                <button type="button" class="num-btn wide">25</button>
-                <button type="button" class="num-btn wide">0</button>
-            </div>
-
+            <div class="numbers" id="num-pad">
+                </div>
             <div class="actions">
                 <button type="button" class="modifier" data-mult="2">DOUBLE</button>
                 <button type="button" class="modifier" data-mult="3">TRIPLE</button>
                 <button type="button" class="undo">UNDO</button>
-                <button type="button" class="next-turn-btn" style="display:none;">NÄCHSTE AUFNAHME</button>
+                <button type="button" class="next-turn-btn" id="next-btn" style="display:none">NÄCHSTE AUFNAHME</button>
             </div>
         </div>
     </div>
