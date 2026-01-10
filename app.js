@@ -7,8 +7,8 @@ const firebaseConfig = {
     databaseURL: "https://dartstwitch-bc90e-default-rtdb.europe-west1.firebasedatabase.app/",
     projectId: "dartstwitch-bc90e",
     storageBucket: "dartstwitch-bc90e.appspot.com",
-    messagingSenderId: "240567333004", // Bitte im Firebase Dashboard nachsehen
-    appId: "1:240567333004:web:267cfddb45c6c4653dcba9",           // Bitte im Firebase Dashboard nachsehen
+    messagingSenderId: "240567333004",
+    appId: "1:240567333004:web:267cfddb45c6c4653dcba9",
     measurementId: "G-5XE8QDNK8Q"
 };
 
@@ -17,58 +17,58 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
+// Globale Funktionen für das Start-Menü und Export (müssen außerhalb von DOMContentLoaded stehen)
+window.renderMenuProfiles = () => {
+    const container = document.getElementById('player-selection-grid');
+    if (!container) return;
+    let profiles = JSON.parse(localStorage.getItem('dartProfiles')) || ["Spieler 1", "Spieler 2"];
+    
+    container.innerHTML = `
+        <select id="p1-select">${profiles.map(p => `<option value="${p}">${p}</option>`).join('')}</select>
+        <select id="p2-select">${profiles.map(p => `<option value="${p}" selected>${p}</option>`).join('')}</select>
+    `;
+};
+
+window.startMatchFromMenu = () => {
+    const settings = {
+        startScore: Number(document.getElementById('menu-startScore').value),
+        bestOfLegs: Number(document.getElementById('menu-legs').value),
+        bestOfSets: Number(document.getElementById('menu-sets').value),
+        playerNames: [
+            document.getElementById('p1-select').value,
+            document.getElementById('p2-select').value
+        ],
+        doubleOut: true
+    };
+    
+    initGame(settings);
+    document.getElementById('start-menu').style.display = 'none';
+    renderGlobal(); // Wir brauchen eine globale Render-Referenz
+};
+
+window.downloadStatsJPG = () => {
+    const area = document.getElementById('capture-area');
+    html2canvas(area, { backgroundColor: '#0b0e12' }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `darts-stats-${new Date().toLocaleDateString()}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.9);
+        link.click();
+    });
+};
+
+window.showFinalStats = (winnerName, avg, dartsTotal) => {
+    document.getElementById('stats-modal').style.display = 'flex';
+    document.getElementById('winner-name').innerText = winnerName + " GEWINNT!";
+    document.getElementById('final-avg').innerText = avg;
+    if(document.getElementById('final-darts')) document.getElementById('final-darts').innerText = dartsTotal;
+    if(document.getElementById('export-date')) document.getElementById('export-date').innerText = new Date().toLocaleDateString();
+};
+
+let renderGlobal; // Platzhalter für die Render-Funktion
+
 document.addEventListener("DOMContentLoaded", () => {
     const numPad = document.getElementById("num-pad");
     const nextBtn = document.getElementById("next-btn");
-window.onload = () => {
-    renderMenuProfiles();
-};
-
-    function renderMenuProfiles() {
-        const container = document.getElementById('player-selection-grid');
-        let profiles = JSON.parse(localStorage.getItem('dartProfiles')) || ["Spieler 1", "Spieler 2"];
-        
-        container.innerHTML = `
-            <select id="p1-select">${profiles.map(p => `<option value="${p}">${p}</option>`).join('')}</select>
-            <select id="p2-select">${profiles.map(p => `<option value="${p}" selected>${p}</option>`).join('')}</select>
-        `;
-    }
-    
-    function startMatchFromMenu() {
-        const settings = {
-            startScore: document.getElementById('menu-startScore').value,
-            bestOfLegs: document.getElementById('menu-legs').value,
-            bestOfSets: document.getElementById('menu-sets').value,
-            playerNames: [
-                document.getElementById('p1-select').value,
-                document.getElementById('p2-select').value
-            ],
-            doubleOut: true
-        };
-        
-        initGame(settings);
-        document.getElementById('start-menu').style.display = 'none';
-        render();
-    }
-    
-    // JPG Export Funktion
-    function downloadStatsJPG() {
-        const area = document.getElementById('capture-area');
-        html2canvas(area, { backgroundColor: '#0b0e12' }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = 'darts-stats.jpg';
-            link.href = canvas.toDataURL('image/jpeg', 0.9);
-            link.click();
-        });
-    }
-    
-    // In game.js handleMatchWin() aufrufen
-    function showFinalStats(winnerName, avg) {
-        document.getElementById('stats-modal').style.display = 'flex';
-        document.getElementById('winner-name').innerText = winnerName + " GEWINNT!";
-        document.getElementById('final-avg').innerText = avg;
-    }
-    // LocalStorage: Profile laden
     let profiles = JSON.parse(localStorage.getItem('dartProfiles')) || ["Spieler 1", "Spieler 2"];
 
     const vibrate = () => { if (navigator.vibrate) navigator.vibrate(40); };
@@ -88,11 +88,9 @@ window.onload = () => {
             numPad.appendChild(btn);
         }
         const b25 = document.createElement("button");
-        b25.innerText = "25"; 
-        b25.className = "wide";
+        b25.innerText = "25"; b25.className = "wide";
         b25.onclick = () => { 
             vibrate(); 
-            // Sicherheitscheck: Triple 25 gibt es nicht, wird zu Single 25
             if (multiplier === 3) multiplier = 1; 
             addDart(25); 
             render(); 
@@ -108,18 +106,15 @@ window.onload = () => {
     function render() {
         if (!game) return;
 
-        // Spieler-Updates
         game.players.forEach((p, i) => {
             const el = document.getElementById(`player-${i}`);
             const checkoutEl = document.getElementById(`checkout-${i}`);
-            
             if (el) {
                 el.classList.toggle("active", i === game.currentPlayer);
                 el.querySelector(".score").innerText = p.score;
                 el.querySelector(".name").innerText = p.name;
                 el.querySelector(".stats-line").innerText = `S: ${p.sets} | L: ${p.legs}`;
                 el.querySelector(".avg-val").innerText = p.avg;
-                
                 if (checkoutEl) {
                     const hint = getCheckoutSuggestion(p.score);
                     checkoutEl.innerText = hint ? hint : "";
@@ -128,13 +123,8 @@ window.onload = () => {
             }
         });
 
-        // Sync zu Firebase & Twitch
         db.ref('currentGame').set(game);
-        if (window.Twitch && window.Twitch.ext) {
-            window.Twitch.ext.send("broadcast", "application/json", JSON.stringify(game));
-        }
-
-        // Dart-Anzeige (Kreise)
+        
         for (let i = 0; i < 3; i++) {
             const dEl = document.getElementById(`dart-${i}`);
             if (dEl) {
@@ -145,7 +135,6 @@ window.onload = () => {
         }
 
         document.querySelector(".turn-sum").innerText = game.currentTurnScore;
-        
         document.querySelectorAll(".mod-btn").forEach(b => {
             b.classList.toggle("active", Number(b.dataset.mult) === multiplier);
         });
@@ -153,73 +142,41 @@ window.onload = () => {
         if (nextBtn) {
             nextBtn.style.display = (game.waitingForNextTurn && !game.isGameOver) ? "block" : "none";
         }
-    }
 
-    // --- Event Handling ---
-    // Wir verschieben den Event-Check in den Klick des Next-Buttons
+        // Automatischer Stats-Check am Ende des Spiels
+        if (game.isGameOver) {
+            const winner = game.players[game.currentPlayer];
+            setTimeout(() => {
+                showFinalStats(winner.name, winner.avg, winner.totalDarts);
+            }, 2000);
+        }
+    }
+    
+    renderGlobal = render; // Render-Funktion global verfügbar machen
+
     if (nextBtn) {
         nextBtn.onclick = () => {
             vibrate();
-            
-            // Check auf besondere Scores BEVOR wir den Turn wechseln
             if (game.currentTurnScore === 180) {
                 triggerEvent("ONE HUNDRED AND EIGHTY!");
             } else if (game.currentTurnScore >= 100) {
-                triggerEvent("LOW TON"); // Oder einfach den Score als Text
+                triggerEvent("LOW TON");
             } else if (game.currentTurnDarts.includes("BUST")) {
                 triggerEvent("BUSTED");
             }
-
             nextTurn(); 
             render();
         };
     }
 
-    window.toggleSettings = () => {
-        const m = document.getElementById("settings-modal");
-        const isOpen = (m.style.display === "flex");
-        m.style.display = isOpen ? "none" : "flex";
-        if (!isOpen) renderProfileSelection();
-    };
-
     window.addNewProfile = () => {
         const n = prompt("Name des neuen Profils:");
         if (n) {
-            profiles.push(n);
-            localStorage.setItem('dartProfiles', JSON.stringify(profiles));
-            renderProfileSelection();
+            let pList = JSON.parse(localStorage.getItem('dartProfiles')) || ["Spieler 1", "Spieler 2"];
+            pList.push(n);
+            localStorage.setItem('dartProfiles', JSON.stringify(pList));
+            renderMenuProfiles();
         }
-    };
-
-    function renderProfileSelection() {
-        const container = document.getElementById("player-profiles-list");
-        if (!container) return;
-        container.innerHTML = "";
-        for (let i = 0; i < 2; i++) {
-            let html = `<label>Spieler ${i+1}: <select id="select-p${i}">`;
-            profiles.forEach(name => {
-                html += `<option value="${name}">${name}</option>`;
-            });
-            html += `</select></label>`;
-            container.innerHTML += html;
-        }
-    }
-
-    window.saveNewSettings = () => {
-        const s = {
-            startScore: Number(document.getElementById("input-startScore").value),
-            bestOfLegs: Number(document.getElementById("input-legs").value),
-            bestOfSets: Number(document.getElementById("input-sets").value),
-            playerNames: [
-                document.getElementById("select-p0").value,
-                document.getElementById("select-p1").value
-            ],
-            doubleOut: true
-        };
-        currentSettings = s;
-        initGame(s);
-        window.toggleSettings();
-        render();
     };
 
     document.querySelectorAll(".mod-btn").forEach(btn => {
@@ -234,6 +191,5 @@ window.onload = () => {
     document.querySelector(".undo-btn").onclick = () => { vibrate(); undo(); render(); };
 
     generatePad();
-    initGame(currentSettings);
-    render();
+    renderMenuProfiles(); // Menü beim Laden vorbereiten
 });
