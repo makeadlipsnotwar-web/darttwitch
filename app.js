@@ -1,17 +1,17 @@
 // app.js
 
-// 1. Firebase Initialisierung (Ersetze die Platzhalter mit deinen echten Daten!)
+// 1. Firebase Initialisierung
 const firebaseConfig = {
-    apiKey: "DEIN_API_KEY",
+    apiKey: "AIzaSyByWwnCTxs80kYeoLicbeEW_0MyeWjWFAI",
     authDomain: "dartstwitch-bc90e.firebaseapp.com",
     databaseURL: "https://dartstwitch-bc90e-default-rtdb.europe-west1.firebasedatabase.app/",
     projectId: "dartstwitch-bc90e",
     storageBucket: "dartstwitch-bc90e.appspot.com",
-    messagingSenderId: "DEINE_ID",
-    appId: "DEINE_APP_ID"
+    messagingSenderId: "240567333004", // Bitte im Firebase Dashboard nachsehen
+    appId: "1:240567333004:web:267cfddb45c6c4653dcba9",           // Bitte im Firebase Dashboard nachsehen
+    measurementId: "G-5XE8QDNK8Q"
 };
 
-// Firebase initialisieren (Falls noch nicht geschehen)
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function render() {
         if (!game) return;
 
-        // Spieler-Updates & Sync
+        // Spieler-Updates
         game.players.forEach((p, i) => {
             const el = document.getElementById(`player-${i}`);
             const checkoutEl = document.getElementById(`checkout-${i}`);
@@ -74,15 +74,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // WICHTIG: Daten an Firebase senden für Viewer & Twitch
+        // Sync zu Firebase & Twitch
         db.ref('currentGame').set(game);
-
-        // Twitch Extension Broadcast (falls aktiv)
         if (window.Twitch && window.Twitch.ext) {
             window.Twitch.ext.send("broadcast", "application/json", JSON.stringify(game));
         }
 
-        // Dart-Kreise
+        // Dart-Anzeige (Kreise)
         for (let i = 0; i < 3; i++) {
             const dEl = document.getElementById(`dart-${i}`);
             if (dEl) {
@@ -101,6 +99,26 @@ document.addEventListener("DOMContentLoaded", () => {
         if (nextBtn) {
             nextBtn.style.display = (game.waitingForNextTurn && !game.isGameOver) ? "block" : "none";
         }
+    }
+
+    // --- Event Handling ---
+    // Wir verschieben den Event-Check in den Klick des Next-Buttons
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            vibrate();
+            
+            // Check auf besondere Scores BEVOR wir den Turn wechseln
+            if (game.currentTurnScore === 180) {
+                triggerEvent("ONE HUNDRED AND EIGHTY!");
+            } else if (game.currentTurnScore >= 100) {
+                triggerEvent("LOW TON"); // Oder einfach den Score als Text
+            } else if (game.currentTurnDarts.includes("BUST")) {
+                triggerEvent("BUSTED");
+            }
+
+            nextTurn(); 
+            render();
+        };
     }
 
     window.toggleSettings = () => {
@@ -160,7 +178,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.querySelector(".undo-btn").onclick = () => { vibrate(); undo(); render(); };
-    if (nextBtn) nextBtn.onclick = () => { vibrate(); nextTurn(); render(); };
 
     generatePad();
     initGame(currentSettings);
