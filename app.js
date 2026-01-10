@@ -54,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Nur beim aktiven Spieler hervorheben
                     checkoutEl.style.opacity = (i === game.currentPlayer) ? "1" : "0.5";
                 }
+                db.ref('currentGame').set(game);
             }
         });
     function sendStateToTwitch() {
