@@ -3,63 +3,83 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Darts Pro</title>
+    <title>Darts Pro Manager</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
     <div id="settings-modal" class="modal">
         <div class="modal-content">
-            <h3>Einstellungen</h3>
-            <label>Punkte: <select id="input-startScore"><option value="301">301</option><option value="501" selected>501</option></select></label>
-            <label>Legs: <input type="number" id="input-legs" value="5"></label>
-            <div id="player-names-inputs"></div>
-            <button class="save-btn" onclick="saveNewSettings()">SPEICHERN</button>
-            <button class="close-btn" onclick="toggleSettings()">ABBRECHEN</button>
+            <div class="modal-header">
+                <h3>Match-Konfiguration</h3>
+                <button class="close-icon" onclick="toggleSettings()">×</button>
+            </div>
+            
+            <div class="settings-section">
+                <h4>Spielmodus</h4>
+                <div class="settings-grid">
+                    <label>Punkte: <select id="input-startScore"><option value="301">301</option><option value="501" selected>501</option><option value="701">701</option></select></label>
+                    <label>Sets (Best of): <input type="number" id="input-sets" value="1" min="1"></label>
+                    <label>Legs (Best of): <input type="number" id="input-legs" value="3" min="1"></label>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4>Profile & Anmeldung</h4>
+                <div id="player-profiles-list"></div>
+                <button class="btn-secondary" onclick="addNewProfile()">+ Neues Profil erstellen</button>
+            </div>
+
+            <button class="save-btn" onclick="saveNewSettings()">SPIEL STARTEN</button>
         </div>
     </div>
 
     <div id="event-overlay" class="event-overlay"><h1 id="event-text">180!</h1></div>
 
     <div class="app">
-        <div class="header">
-            <span>DARTS PRO</span>
-            <button onclick="toggleSettings()">⚙️</button>
-        </div>
+        <header class="main-header">
+            <div class="brand">
+                <span class="logo-icon">🎯</span>
+                <div class="logo-text">DARTS<span>PRO</span></div>
+            </div>
+            <button class="settings-btn" onclick="toggleSettings()">
+                <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.97 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
+            </button>
+        </header>
 
-        <div class="scoreboard">
+        <section class="scoreboard">
             <div class="player active" id="player-0">
                 <div class="name">Spieler 1</div>
                 <div class="score">501</div>
-                <div class="meta">Sets 0 · Legs 0</div>
+                <div class="stats-line">S: 0 | L: 0</div>
+                <div class="avg-box">AVG: <span class="avg-val">0.00</span></div>
             </div>
             <div class="player" id="player-1">
                 <div class="name">Spieler 2</div>
                 <div class="score">501</div>
-                <div class="meta">Sets 0 · Legs 0</div>
+                <div class="stats-line">S: 0 | L: 0</div>
+                <div class="avg-box">AVG: <span class="avg-val">0.00</span></div>
             </div>
-        </div>
+        </section>
 
-        <div class="turn-history">
-            <div class="dart" id="dart-0">?</div>
-            <div class="dart" id="dart-1">?</div>
-            <div class="dart" id="dart-2">?</div>
-        </div>
-
-        <div class="turn-info-area">
-            <div class="turn-score">0</div>
-        </div>
-
-        <div class="pad">
-            <div class="numbers" id="num-pad">
-                </div>
-            <div class="actions">
-                <button type="button" class="modifier" data-mult="2">DOUBLE</button>
-                <button type="button" class="modifier" data-mult="3">TRIPLE</button>
-                <button type="button" class="undo">UNDO</button>
-                <button type="button" class="next-turn-btn" id="next-btn" style="display:none">NÄCHSTE AUFNAHME</button>
+        <section class="current-turn-display">
+            <div class="dart-history">
+                <div class="dart-circle" id="dart-0">?</div>
+                <div class="dart-circle" id="dart-1">?</div>
+                <div class="dart-circle" id="dart-2">?</div>
             </div>
-        </div>
+            <div class="turn-sum">0</div>
+        </section>
+
+        <section class="input-area">
+            <div class="num-grid" id="num-pad"></div>
+            <div class="action-grid">
+                <button class="mod-btn" data-mult="2">DOUBLE</button>
+                <button class="mod-btn" data-mult="3">TRIPLE</button>
+                <button class="undo-btn">UNDO</button>
+                <button class="next-btn" id="next-btn" style="display:none">NÄCHSTE AUFNAHME</button>
+            </div>
+        </section>
     </div>
 
     <script src="settings.js"></script>
