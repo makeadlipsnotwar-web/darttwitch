@@ -20,7 +20,54 @@ const db = firebase.database();
 document.addEventListener("DOMContentLoaded", () => {
     const numPad = document.getElementById("num-pad");
     const nextBtn = document.getElementById("next-btn");
+window.onload = () => {
+    renderMenuProfiles();
+};
 
+    function renderMenuProfiles() {
+        const container = document.getElementById('player-selection-grid');
+        let profiles = JSON.parse(localStorage.getItem('dartProfiles')) || ["Spieler 1", "Spieler 2"];
+        
+        container.innerHTML = `
+            <select id="p1-select">${profiles.map(p => `<option value="${p}">${p}</option>`).join('')}</select>
+            <select id="p2-select">${profiles.map(p => `<option value="${p}" selected>${p}</option>`).join('')}</select>
+        `;
+    }
+    
+    function startMatchFromMenu() {
+        const settings = {
+            startScore: document.getElementById('menu-startScore').value,
+            bestOfLegs: document.getElementById('menu-legs').value,
+            bestOfSets: document.getElementById('menu-sets').value,
+            playerNames: [
+                document.getElementById('p1-select').value,
+                document.getElementById('p2-select').value
+            ],
+            doubleOut: true
+        };
+        
+        initGame(settings);
+        document.getElementById('start-menu').style.display = 'none';
+        render();
+    }
+    
+    // JPG Export Funktion
+    function downloadStatsJPG() {
+        const area = document.getElementById('capture-area');
+        html2canvas(area, { backgroundColor: '#0b0e12' }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'darts-stats.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        });
+    }
+    
+    // In game.js handleMatchWin() aufrufen
+    function showFinalStats(winnerName, avg) {
+        document.getElementById('stats-modal').style.display = 'flex';
+        document.getElementById('winner-name').innerText = winnerName + " GEWINNT!";
+        document.getElementById('final-avg').innerText = avg;
+    }
     // LocalStorage: Profile laden
     let profiles = JSON.parse(localStorage.getItem('dartProfiles')) || ["Spieler 1", "Spieler 2"];
 
