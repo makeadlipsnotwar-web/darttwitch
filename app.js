@@ -56,7 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         });
-
+    function sendStateToTwitch() {
+        if (window.Twitch && window.Twitch.ext) {
+            window.Twitch.ext.send("broadcast", "application/json", JSON.stringify(game));
+        }
+    }
         // Dart-Kreise (Aufnahme)
         for (let i = 0; i < 3; i++) {
             const dEl = document.getElementById(`dart-${i}`);
