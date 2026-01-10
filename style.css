@@ -78,3 +78,63 @@ body {
     letter-spacing: 1px;
     min-height: 1.2em;
 }
+
+.menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #1a1f26 0%, #0b0e12 100%);
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-card {
+    background: rgba(22, 27, 34, 0.95);
+    padding: 40px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 71, 71, 0.3);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+.brand-large h1 { font-size: 2.5rem; margin: 10px 0; letter-spacing: 2px; }
+.brand-large span { color: var(--accent); }
+
+.setup-section { margin: 25px 0; text-align: left; }
+.setup-section h3 { font-size: 0.8rem; color: #8b949e; letter-spacing: 1px; margin-bottom: 10px; }
+
+.selection-grid select {
+    width: 100%;
+    padding: 15px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    color: white;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.start-match-btn {
+    width: 100%;
+    padding: 20px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(46, 160, 67, 0.3);
+    transition: transform 0.2s;
+}
+
+.start-match-btn:hover { transform: scale(1.02); }
+
+/* Stats JPG Design */
+.stats-export-card {
+    background: linear-gradient(135deg, #161b22 0%, #0b0e12 100%);
+    border: 2px solid var(--accent);
+    padding: 30px;
+}
