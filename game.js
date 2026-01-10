@@ -1,143 +1,145 @@
-// app.js
-document.addEventListener("DOMContentLoaded", () => {
-    const numPad = document.getElementById("num-pad");
-    const nextBtn = document.getElementById("next-btn");
+// game.js
+let game = null;
+let multiplier = 1;
+let history = [];
 
-    // LocalStorage: Profile laden oder Standard erstellen
-    let profiles = JSON.parse(localStorage.getItem('dartProfiles')) || ["Spieler 1", "Spieler 2"];
+// Initialisiert ein neues Spiel
+function initGame(settings) {
+    const players = settings.playerNames.map(name => ({
+        name: name,
+        score: Number(settings.startScore),
+        legs: 0,
+        sets: 0,
+        totalPoints: 0, // Für Statistik
+        totalDarts: 0,  // Für Statistik
+        avg: "0.00"
+    }));
 
-    // Hilfsfunktion für Vibration
-    const vibrate = () => { if (navigator.vibrate) navigator.vibrate(40); };
+    game = {
+        settings: { ...settings },
+        currentPlayer: 0,
+        currentTurnDarts: [],
+        currentTurnScore: 0,
+        scoreAtTurnStart: Number(settings.startScore),
+        players: players,
+        isGameOver: false,
+        waitingForNextTurn: false
+    };
+    history = [];
+}
 
-    // Tastatur im HTML generieren
-    function generatePad() {
-        if (!numPad) return;
-        numPad.innerHTML = "";
-        for (let i = 1; i <= 20; i++) {
-            const btn = document.createElement("button");
-            btn.innerText = i;
-            btn.onclick = () => {
-                if (game.waitingForNextTurn) return;
-                vibrate();
-                addDart(i);
-                render();
-            };
-            numPad.appendChild(btn);
-        }
-        // 25er und 0er (Miss)
-        const b25 = document.createElement("button");
-        b25.innerText = "25"; b25.className = "wide";
-        b25.onclick = () => { vibrate(); addDart(25); render(); };
-        numPad.appendChild(b25);
+// Speichert den aktuellen Stand für die Undo-Funktion
+function saveState() {
+    history.push(JSON.parse(JSON.stringify({
+        players: game.players,
+        currentPlayer: game.currentPlayer,
+        currentTurnDarts: game.currentTurnDarts,
+        currentTurnScore: game.currentTurnScore,
+        scoreAtTurnStart: game.scoreAtTurnStart,
+        waitingForNextTurn: game.waitingForNextTurn,
+        isGameOver: game.isGameOver
+    })));
+}
+
+// Kern-Funktion: Ein Dart wird geworfen
+function addDart(value) {
+    if (game.isGameOver || game.waitingForNextTurn) return;
+
+    saveState();
+    const points = value * multiplier;
+    const player = game.players[game.currentPlayer];
+    const newScore = player.score - points;
+
+    // Statistik-Update
+    player.totalPoints += points;
+    player.totalDarts += 1;
+    player.avg = ((player.totalPoints / player.totalDarts) * 3).toFixed(2);
+
+    // Check auf Double-Out & Bust
+    const isDouble = (multiplier === 2);
+    const isBust = newScore < 0 || (newScore === 1 && game.settings.doubleOut) || (newScore === 0 && game.settings.doubleOut && !isDouble);
+
+    if (isBust) {
+        player.score = game.scoreAtTurnStart;
+        game.currentTurnDarts.push("BUST");
+        game.waitingForNextTurn = true;
+        triggerEvent("BUST!");
+    } else {
+        player.score = newScore;
+        game.currentTurnScore += points;
+        game.currentTurnDarts.push(points);
         
-        const b0 = document.createElement("button");
-        b0.innerText = "0"; b0.className = "wide";
-        b0.onclick = () => { vibrate(); addDart(0); render(); };
-        numPad.appendChild(b0);
-    }
-
-    // Anzeige aktualisieren
-    function render() {
-        if (!game) return;
-
-        // Spieler-Karten
-        game.players.forEach((p, i) => {
-            const el = document.getElementById(`player-${i}`);
-            if (el) {
-                el.classList.toggle("active", i === game.currentPlayer);
-                el.querySelector(".score").innerText = p.score;
-                el.querySelector(".name").innerText = p.name;
-                el.querySelector(".stats-line").innerText = `S: ${p.sets} | L: ${p.legs}`;
-                el.querySelector(".avg-val").innerText = p.avg;
-            }
-        });
-
-        // Dart-Kreise (Aufnahme)
-        for (let i = 0; i < 3; i++) {
-            const dEl = document.getElementById(`dart-${i}`);
-            if (dEl) {
-                const val = game.currentTurnDarts[i];
-                dEl.innerText = val !== undefined ? val : "?";
-                dEl.classList.toggle("active", i === game.currentTurnDarts.length && !game.waitingForNextTurn);
+        if (newScore === 0) {
+            handleLegWin();
+        } else if (game.currentTurnDarts.length === 3) {
+            game.waitingForNextTurn = true;
+            if (game.currentTurnScore >= 100) {
+                triggerEvent(game.currentTurnScore === 180 ? "180!" : "BIG SCORE!");
             }
         }
+    }
+    multiplier = 1; // Multiplikator immer zurücksetzen
+}
 
-        // Summe der aktuellen Aufnahme
-        document.querySelector(".turn-sum").innerText = game.currentTurnScore;
+// Logik für Leg- und Set-Gewinn
+function handleLegWin() {
+    const player = game.players[game.currentPlayer];
+    player.legs++;
+    
+    const legsToWin = Math.ceil(game.settings.bestOfLegs / 2);
+    if (player.legs >= legsToWin) {
+        player.sets++;
+        const setsToWin = Math.ceil(game.settings.bestOfSets / 2);
         
-        // Multiplikator-Buttons markieren
-        document.querySelectorAll(".mod-btn").forEach(b => {
-            b.classList.toggle("active", Number(b.dataset.mult) === multiplier);
-        });
-
-        // "Nächste Aufnahme" Button
-        if (nextBtn) {
-            nextBtn.style.display = game.waitingForNextTurn && !game.isGameOver ? "block" : "none";
+        if (player.sets >= setsToWin) {
+            triggerEvent("MATCH WON!");
+            game.isGameOver = true;
+        } else {
+            triggerEvent("SET WON!");
+            game.players.forEach(p => p.legs = 0);
         }
+    } else {
+        triggerEvent("LEG WON!");
     }
 
-    // Modal Funktionen global verfügbar machen
-    window.toggleSettings = () => {
-        const m = document.getElementById("settings-modal");
-        const isOpen = (m.style.display === "flex");
-        m.style.display = isOpen ? "none" : "flex";
-        if (!isOpen) renderProfileSelection();
-    };
+    if (!game.isGameOver) {
+        game.players.forEach(p => p.score = game.settings.startScore);
+        game.waitingForNextTurn = true;
+    }
+}
 
-    window.addNewProfile = () => {
-        const n = prompt("Name des neuen Profils:");
-        if (n) {
-            profiles.push(n);
-            localStorage.setItem('dartProfiles', JSON.stringify(profiles));
-            renderProfileSelection();
-        }
-    };
+// Nächste Aufnahme starten
+function nextTurn() {
+    if (!game.waitingForNextTurn) return;
+    game.currentPlayer = (game.currentPlayer + 1) % game.players.length;
+    game.currentTurnDarts = [];
+    game.currentTurnScore = 0;
+    game.scoreAtTurnStart = game.players[game.currentPlayer].score;
+    game.waitingForNextTurn = false;
+}
 
-    function renderProfileSelection() {
-        const container = document.getElementById("player-profiles-list");
-        container.innerHTML = "";
-        for (let i = 0; i < 2; i++) {
-            let html = `<label>Spieler ${i+1}: <select id="select-p${i}">`;
-            profiles.forEach(name => {
-                html += `<option value="${name}">${name}</option>`;
-            });
-            html += `</select></label>`;
-            container.innerHTML += html;
-        }
+// Rückgängig-Funktion
+function undo() {
+    if (history.length === 0) return;
+    const last = history.pop();
+    Object.assign(game, last);
+    multiplier = 1;
+}
+
+// Visuelles Event triggern (180, Leg etc.)
+function triggerEvent(message) {
+    const overlay = document.getElementById('event-overlay');
+    const text = document.getElementById('event-text');
+    if (!overlay || !text) return;
+
+    text.innerText = message;
+    overlay.style.display = 'flex';
+    
+    if ('speechSynthesis' in window) {
+        const msg = new SpeechSynthesisUtterance(message);
+        msg.lang = 'en-US';
+        window.speechSynthesis.speak(msg);
     }
 
-    window.saveNewSettings = () => {
-        const s = {
-            startScore: Number(document.getElementById("input-startScore").value),
-            bestOfLegs: Number(document.getElementById("input-legs").value),
-            bestOfSets: Number(document.getElementById("input-sets").value),
-            playerNames: [
-                document.getElementById("select-p0").value,
-                document.getElementById("select-p1").value
-            ],
-            doubleOut: true
-        };
-        currentSettings = s;
-        initGame(s);
-        window.toggleSettings();
-        render();
-    };
-
-    // Event Listener für Controls
-    document.querySelectorAll(".mod-btn").forEach(btn => {
-        btn.onclick = () => {
-            vibrate();
-            const m = Number(btn.dataset.mult);
-            multiplier = (multiplier === m) ? 1 : m;
-            render();
-        };
-    });
-
-    document.querySelector(".undo-btn").onclick = () => { vibrate(); undo(); render(); };
-    if (nextBtn) nextBtn.onclick = () => { vibrate(); nextTurn(); render(); };
-
-    // App Start
-    generatePad();
-    initGame(currentSettings);
-    render();
-});
+    setTimeout(() => { overlay.style.display = 'none'; }, 1500);
+}
