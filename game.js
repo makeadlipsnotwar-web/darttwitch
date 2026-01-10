@@ -143,3 +143,24 @@ function triggerEvent(message) {
 
     setTimeout(() => { overlay.style.display = 'none'; }, 1500);
 }
+function getCheckoutSuggestion(score) {
+    if (score > 170 || score <= 1) return null;
+
+    const checkouts = {
+        170: "T20 T20 Bull", 167: "T20 T19 Bull", 164: "T20 T18 Bull",
+        161: "T20 T17 Bull", 160: "T20 T20 D20", 141: "T20 T15 D18",
+        121: "T20 T15 D8",  100: "T20 D20",    90: "T20 D15",
+        80: "T20 D10",     70: "T10 D20",     60: "20 D20",
+        50: "10 D20",      40: "D20",         32: "D16",
+        20: "D10",         10: "D5",          4: "D2"
+    };
+
+    // Wenn kein exakter Weg drin steht, berechnen wir einen einfachen:
+    if (checkouts[score]) return checkouts[score];
+    
+    // Einfache Logik für kleinere Scores:
+    if (score <= 40 && score % 2 === 0) return "D" + (score / 2);
+    if (score <= 60) return (score - 40) + " D20";
+    
+    return "Finish möglich!"; // Platzhalter für sehr komplexe Wege
+}
