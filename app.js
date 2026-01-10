@@ -38,17 +38,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Anzeige aktualisieren
     function render() {
-        if (!game) return;
-
-        // Spieler-Karten
         game.players.forEach((p, i) => {
             const el = document.getElementById(`player-${i}`);
+            const checkoutEl = document.getElementById(`checkout-${i}`);
+            
             if (el) {
                 el.classList.toggle("active", i === game.currentPlayer);
                 el.querySelector(".score").innerText = p.score;
                 el.querySelector(".name").innerText = p.name;
-                el.querySelector(".stats-line").innerText = `S: ${p.sets} | L: ${p.legs}`;
-                el.querySelector(".avg-val").innerText = p.avg;
+                
+                // Checkout Vorschlag anzeigen
+                if (checkoutEl) {
+                    const hint = getCheckoutSuggestion(p.score);
+                    checkoutEl.innerText = hint ? hint : "";
+                    // Nur beim aktiven Spieler hervorheben
+                    checkoutEl.style.opacity = (i === game.currentPlayer) ? "1" : "0.5";
+                }
             }
         });
 
