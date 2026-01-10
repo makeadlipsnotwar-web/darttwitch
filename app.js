@@ -1,15 +1,31 @@
 // app.js
+
+// 1. Firebase Initialisierung (Ersetze die Platzhalter mit deinen echten Daten!)
+const firebaseConfig = {
+    apiKey: "DEIN_API_KEY",
+    authDomain: "dartstwitch-bc90e.firebaseapp.com",
+    databaseURL: "https://dartstwitch-bc90e-default-rtdb.europe-west1.firebasedatabase.app/",
+    projectId: "dartstwitch-bc90e",
+    storageBucket: "dartstwitch-bc90e.appspot.com",
+    messagingSenderId: "DEINE_ID",
+    appId: "DEINE_APP_ID"
+};
+
+// Firebase initialisieren (Falls noch nicht geschehen)
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
 document.addEventListener("DOMContentLoaded", () => {
     const numPad = document.getElementById("num-pad");
     const nextBtn = document.getElementById("next-btn");
 
-    // LocalStorage: Profile laden oder Standard erstellen
+    // LocalStorage: Profile laden
     let profiles = JSON.parse(localStorage.getItem('dartProfiles')) || ["Spieler 1", "Spieler 2"];
 
-    // Hilfsfunktion für Vibration
     const vibrate = () => { if (navigator.vibrate) navigator.vibrate(40); };
 
-    // Tastatur im HTML generieren
     function generatePad() {
         if (!numPad) return;
         numPad.innerHTML = "";
@@ -24,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
             };
             numPad.appendChild(btn);
         }
-        // 25er und 0er (Miss)
         const b25 = document.createElement("button");
         b25.innerText = "25"; b25.className = "wide";
         b25.onclick = () => { vibrate(); addDart(25); render(); };
@@ -36,8 +51,10 @@ document.addEventListener("DOMContentLoaded", () => {
         numPad.appendChild(b0);
     }
 
-    // Anzeige aktualisieren
     function render() {
+        if (!game) return;
+
+        // Spieler-Updates & Sync
         game.players.forEach((p, i) => {
             const el = document.getElementById(`player-${i}`);
             const checkoutEl = document.getElementById(`checkout-${i}`);
@@ -46,23 +63,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 el.classList.toggle("active", i === game.currentPlayer);
                 el.querySelector(".score").innerText = p.score;
                 el.querySelector(".name").innerText = p.name;
+                el.querySelector(".stats-line").innerText = `S: ${p.sets} | L: ${p.legs}`;
+                el.querySelector(".avg-val").innerText = p.avg;
                 
-                // Checkout Vorschlag anzeigen
                 if (checkoutEl) {
                     const hint = getCheckoutSuggestion(p.score);
                     checkoutEl.innerText = hint ? hint : "";
-                    // Nur beim aktiven Spieler hervorheben
                     checkoutEl.style.opacity = (i === game.currentPlayer) ? "1" : "0.5";
                 }
-                db.ref('currentGame').set(game);
             }
         });
-    function sendStateToTwitch() {
+
+        // WICHTIG: Daten an Firebase senden für Viewer & Twitch
+        db.ref('currentGame').set(game);
+
+        // Twitch Extension Broadcast (falls aktiv)
         if (window.Twitch && window.Twitch.ext) {
             window.Twitch.ext.send("broadcast", "application/json", JSON.stringify(game));
         }
-    }
-        // Dart-Kreise (Aufnahme)
+
+        // Dart-Kreise
         for (let i = 0; i < 3; i++) {
             const dEl = document.getElementById(`dart-${i}`);
             if (dEl) {
@@ -72,21 +92,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Summe der aktuellen Aufnahme
         document.querySelector(".turn-sum").innerText = game.currentTurnScore;
         
-        // Multiplikator-Buttons markieren
         document.querySelectorAll(".mod-btn").forEach(b => {
             b.classList.toggle("active", Number(b.dataset.mult) === multiplier);
         });
 
-        // "Nächste Aufnahme" Button
         if (nextBtn) {
-            nextBtn.style.display = game.waitingForNextTurn && !game.isGameOver ? "block" : "none";
+            nextBtn.style.display = (game.waitingForNextTurn && !game.isGameOver) ? "block" : "none";
         }
     }
 
-    // Modal Funktionen global verfügbar machen
     window.toggleSettings = () => {
         const m = document.getElementById("settings-modal");
         const isOpen = (m.style.display === "flex");
@@ -105,6 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderProfileSelection() {
         const container = document.getElementById("player-profiles-list");
+        if (!container) return;
         container.innerHTML = "";
         for (let i = 0; i < 2; i++) {
             let html = `<label>Spieler ${i+1}: <select id="select-p${i}">`;
@@ -133,7 +150,6 @@ document.addEventListener("DOMContentLoaded", () => {
         render();
     };
 
-    // Event Listener für Controls
     document.querySelectorAll(".mod-btn").forEach(btn => {
         btn.onclick = () => {
             vibrate();
@@ -146,7 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector(".undo-btn").onclick = () => { vibrate(); undo(); render(); };
     if (nextBtn) nextBtn.onclick = () => { vibrate(); nextTurn(); render(); };
 
-    // App Start
     generatePad();
     initGame(currentSettings);
     render();
