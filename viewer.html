@@ -2,68 +2,87 @@
 <html>
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 </head>
 <body style="background: transparent;"> 
-    <div class="app" style="background: transparent; padding: 0;">
+    <div class="app" style="background: transparent; padding: 5px;">
         <div id="scoreboard-container" class="scoreboard">
             </div>
 
         <div class="turn-history">
-            <div class="dart" id="dart-0">?</div>
-            <div class="dart" id="dart-1">?</div>
-            <div class="dart" id="dart-2">?</div>
+            <div class="dart-circle" id="dart-0">?</div>
+            <div class="dart-circle" id="dart-1">?</div>
+            <div class="dart-circle" id="dart-2">?</div>
         </div>
 
-        <div class="turn">
-            <div class="turn-score" style="font-size: 30px;">0</div>
+        <div class="turn-info-area">
+            <div class="turn-sum" style="font-size: 30px;">0</div>
         </div>
     </div>
 
     <script>
-        // ACHTUNG: Hier musst du deine echten Daten einfügen!
+        // WICHTIG: Ersetze DEINE_ID und DEINE_APP_ID mit den Werten aus den Firebase-Einstellungen
         const firebaseConfig = {
             apiKey: "AIzaSyByWwnCTxs80kYeoLicbeEW_0MyeWjWFAI",
             authDomain: "dartstwitch-bc90e.firebaseapp.com",
             databaseURL: "https://dartstwitch-bc90e-default-rtdb.europe-west1.firebasedatabase.app/",
             projectId: "dartstwitch-bc90e",
             storageBucket: "dartstwitch-bc90e.appspot.com",
-            messagingSenderId: "DEINE_ID",
-            appId: "DEINE_APP_ID"
+            messagingSenderId: "240567333004", // Hier die Nummer eintragen
+            appId: "1:240567333004:web:267cfddb45c6c4653dcba9",          // Hier die 1:xxx ID eintragen
+            measurementId: "G-5XE8QDNK8Q"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        // Initialisierung
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
 
+        // Echtzeit-Update
         db.ref('currentGame').on('value', (snapshot) => {
             const gameData = snapshot.val();
-            if (gameData) updateUI(gameData);
+            if (gameData) {
+                console.log("Update empfangen...");
+                updateUI(gameData);
+            }
         });
 
         function updateUI(game) {
             const container = document.getElementById('scoreboard-container');
-            container.innerHTML = ""; // Leeren
+            if (!container) return;
+            container.innerHTML = ""; 
 
             game.players.forEach((p, i) => {
                 const playerDiv = document.createElement('div');
                 playerDiv.className = `player ${i === game.currentPlayer ? 'active' : ''}`;
+                // Checkout Logik für Viewer (simpel)
+                const checkout = (i === game.currentPlayer && p.score <= 170) ? "Finish möglich" : "";
+
                 playerDiv.innerHTML = `
                     <div class="name">${p.name}</div>
                     <div class="score">${p.score}</div>
-                    <div class="meta">S: ${p.sets} | L: ${p.legs}</div>
-                    <div style="font-size: 10px; color: var(--accent);">AVG: ${p.avg || '0.00'}</div>
+                    <div class="stats-line">S: ${p.sets} | L: ${p.legs}</div>
+                    <div class="avg-box">AVG: ${p.avg || '0.00'}</div>
                 `;
                 container.appendChild(playerDiv);
             });
 
-            // Darts History
+            // Darts History (Klassenname dart-circle passend zum neuen CSS)
             for (let i = 0; i < 3; i++) {
-                const val = game.currentTurnDarts ? game.currentTurnDarts[i] : undefined;
-                document.getElementById(`dart-${i}`).innerText = val !== undefined ? val : "?";
+                const dartEl = document.getElementById(`dart-${i}`);
+                if (dartEl) {
+                    const val = game.currentTurnDarts ? game.currentTurnDarts[i] : undefined;
+                    dartEl.innerText = val !== undefined ? val : "?";
+                    dartEl.classList.toggle("active", game.currentTurnDarts && i === game.currentTurnDarts.length);
+                }
             }
-            document.querySelector(".turn-score").innerText = game.currentTurnScore || 0;
+            
+            const turnSumEl = document.querySelector(".turn-sum");
+            if (turnSumEl) turnSumEl.innerText = game.currentTurnScore || 0;
         }
     </script>
 </body>
