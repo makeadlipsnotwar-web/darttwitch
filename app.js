@@ -41,8 +41,15 @@ document.addEventListener("DOMContentLoaded", () => {
             numPad.appendChild(btn);
         }
         const b25 = document.createElement("button");
-        b25.innerText = "25"; b25.className = "wide";
-        b25.onclick = () => { vibrate(); addDart(25); render(); };
+        b25.innerText = "25"; 
+        b25.className = "wide";
+        b25.onclick = () => { 
+            vibrate(); 
+            // Sicherheitscheck: Triple 25 gibt es nicht, wird zu Single 25
+            if (multiplier === 3) multiplier = 1; 
+            addDart(25); 
+            render(); 
+        };
         numPad.appendChild(b25);
         
         const b0 = document.createElement("button");
