@@ -193,3 +193,8 @@ document.addEventListener("DOMContentLoaded", () => {
     generatePad();
     renderMenuProfiles(); // Menü beim Laden vorbereiten
 });
+window.onload = () => {
+    if (typeof renderMenuProfiles === "function") {
+        renderMenuProfiles();
+    }
+};
