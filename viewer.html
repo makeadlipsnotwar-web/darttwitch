@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+</head>
+<body style="background: transparent;"> <div id="scoreboard-container" class="scoreboard">
+        </div>
+
+    <script>
+        // Firebase Konfiguration (von der Webseite kopieren)
+        const firebaseConfig = { ... }; 
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Auf Änderungen warten
+        db.ref('currentGame').on('value', (snapshot) => {
+            const gameData = snapshot.val();
+            updateUI(gameData);
+        });
+
+        function updateUI(game) {
+            // Hier nutzt du eine vereinfachte Version deiner render() Funktion
+        }
+    </script>
+</body>
+</html>
