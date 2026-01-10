@@ -69,3 +69,12 @@ body {
 .event-overlay { display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; pointer-events: none; }
 .event-overlay h1 { font-size: 4rem; text-align: center; color: var(--white); animation: pop 1.2s ease-out forwards; }
 @keyframes pop { 0% {transform: scale(0.5); opacity:0} 30% {transform: scale(1.1); opacity:1} 100% {transform: scale(1); opacity:0} }
+.checkout-hint {
+    height: 20px; /* Platzhalter reservieren */
+    margin: 5px 0;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #2ea043; /* Grün für Finish-Bereich */
+    letter-spacing: 1px;
+    min-height: 1.2em;
+}
